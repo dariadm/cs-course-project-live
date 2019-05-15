@@ -1,11 +1,9 @@
 ﻿using System;
+using Reminder.Storage.Core;
 
-namespace Reminder.Storage.Core
+namespace Reminder.Storage.WebApi.Core
 {
-	/// <summary>
-	/// The single reminder item.
-	/// </summary>
-	public class ReminderItem
+	public class ReminderItemGetModel
 	{
 		/// <summary>
 		/// Gets the identifier.
@@ -32,10 +30,29 @@ namespace Reminder.Storage.Core
 		/// </summary>
 		public ReminderItemStatus Status { get; set; }
 
-		/// <summary>
-		/// Gets the value indicating whether the time for sending item came or not.
-		/// </summary>
-		public bool IsTimeToSend => Date.UtcDateTime < DateTimeOffset.UtcNow;
+		public ReminderItemGetModel()
+		{
+			
+		}
+
+		public ReminderItemGetModel(ReminderItem reminderItem)
+		{
+			Id = reminderItem.Id;
+			Date = reminderItem.Date;
+			ContactId = reminderItem.ContactId;
+			Message = reminderItem.Message;
+			Status = reminderItem.Status; 
+		}
+
+		public ReminderItem ToReminderItem()
+		{
+			return new ReminderItem
+			{
+				Date = Date,
+				ContactId = ContactId,
+				Message = Message, 
+				Status = Status
+			};
+		}
 	}
 }
-
