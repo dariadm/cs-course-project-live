@@ -44,6 +44,15 @@ namespace Reminder.Storage.WebApi.Core
 			Status = reminderItem.Status; 
 		}
 
+		public ReminderItemGetModel(Guid id, ReminderItemRestricted reminderItem)
+		{
+			Id = id;
+			Date = reminderItem.Date;
+			ContactId = reminderItem.ContactId;
+			Message = reminderItem.Message;
+			Status = reminderItem.Status;
+		}
+
 		public ReminderItem ToReminderItem()
 		{
 			return new ReminderItem

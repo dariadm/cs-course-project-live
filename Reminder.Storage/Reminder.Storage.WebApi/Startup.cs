@@ -30,9 +30,8 @@ namespace Reminder.Storage.WebApi
 			services.AddSingleton<IReminderStorage>(new InMemoryReminderStorage());
 			//services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
 			var storage = new InMemoryReminderStorage();
-			storage.Add(new ReminderItem
+			storage.Add(new ReminderItemRestricted
 			{
-				Id = Guid.Empty,
 				Date = DateTimeOffset.Now.AddMinutes(1),
 				ContactId = "TestContact",
 				Message = "TestMessage"

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Reminder.Storage.Core;
 using Reminder.Storage.WebApi.Core;
@@ -27,8 +28,8 @@ namespace Reminder.Storage.WebApi.Controllers
 				.Get(status)
 				.Select(x => new ReminderItemGetModel(x))
 				.ToList();
-			
-			return Ok(reminderItemGetModels); 
+
+			return Ok(reminderItemGetModels);
 		}
 
 		// GET api/values
@@ -53,14 +54,59 @@ namespace Reminder.Storage.WebApi.Controllers
 				return BadRequest();
 			}
 
-			var reminderItem = reminder.ToReminderItem(); 
-			_reminderStorage.Add(reminderItem);
+			var reminderItem = reminder.ToReminderItem();
+			Guid id = _reminderStorage.Add(reminderItem);
 
 			return CreatedAtRoute(
 				"GetReminder",
-				new {id = reminderItem.Id},
-				new ReminderItemGetModel(reminderItem)
+				new { id },
+				new ReminderItemGetModel(id, reminderItem)
 				);
+		}
+
+		[HttpPatch]
+		public IActionResult UpdateReminderStatus(
+
+			[FromBody] JsonPatchDocument<ReminderItemsUpdateModel> reminderItemsUpdateModel)
+		{
+			if (reminderItemsUpdateModel == null || !ModelState.IsValid)
+			{
+				return BadRequest();
+			}
+
+			var reminderitemModelToPatch = new ReminderItemUpdateModel();
+			reminderItemsUpdateModel.PatchDocument.ApplyTo(reminderitemModelToPatch);
+
+			_reminderStorage.UpdateStatus(
+				reminderItemsUpdateModel.ids,
+				reminderItemsUpdateModel.Status);
+
+			return NoContent();
+		}
+
+		[HttpPatch("{id}")]
+		public IActionResult UpdateReminderStatus(
+			Guid id,
+			[FromBody] JsonPatchDocument<ReminderItemUpdateModel> patchDocument)
+		{
+			var reminderItem = _reminderStorage.Get(id);
+
+			if (reminderItem == null)
+			{
+				return BadRequest();
+			}
+
+			if (patchDocument == null || !ModelState.IsValid)
+			{
+				return BadRequest(ModelState);
+			}
+
+			var reminderItemModelToPatch = new ReminderItemUpdateModel
+			{
+				Status = reminderItem.Status;
+			};
+
+
 		}
 	}
 }
