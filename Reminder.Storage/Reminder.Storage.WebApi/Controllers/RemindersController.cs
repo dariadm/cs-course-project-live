@@ -67,19 +67,19 @@ namespace Reminder.Storage.WebApi.Controllers
 		[HttpPatch]
 		public IActionResult UpdateReminderStatus(
 
-			[FromBody] JsonPatchDocument<ReminderItemsUpdateModel> reminderItemsUpdateModel)
+			[FromBody] ReminderItemsUpdateModel reminderItemsUpdateModel)
 		{
 			if (reminderItemsUpdateModel == null || !ModelState.IsValid)
 			{
 				return BadRequest();
 			}
 
-			var reminderitemModelToPatch = new ReminderItemUpdateModel();
-			reminderItemsUpdateModel.PatchDocument.ApplyTo(reminderitemModelToPatch);
+			var reminderItemModelToPatch = new ReminderItemUpdateModel();
+			reminderItemsUpdateModel.PatchDocument.ApplyTo(reminderItemModelToPatch);
 
 			_reminderStorage.UpdateStatus(
-				reminderItemsUpdateModel.ids,
-				reminderItemsUpdateModel.Status);
+				reminderItemsUpdateModel.Ids,
+                reminderItemModelToPatch.Status);
 
 			return NoContent();
 		}
@@ -101,12 +101,12 @@ namespace Reminder.Storage.WebApi.Controllers
 				return BadRequest(ModelState);
 			}
 
-			var reminderItemModelToPatch = new ReminderItemUpdateModel
-			{
-				Status = reminderItem.Status;
-			};
+            var reminderItemModelToPatch = new ReminderItemUpdateModel(reminderItem);
+            patchDocument.ApplyTo(reminderItemModelToPatch);
 
+            _reminderStorage.UpdateStatus(id, reminderItemModelToPatch.Status);
 
+            return NoContent();
 		}
 	}
 }

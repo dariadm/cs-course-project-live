@@ -30,6 +30,8 @@ namespace TesrWebApiClient
 				$"{reminderItemFromStorage.ContactId}\n" + 
 				$"{reminderItemFromStorage.Date}\n" + 
 				$"{reminderItemFromStorage.Message}\n");
+
+            Console.ReadKey();
 		}
 	}
 }

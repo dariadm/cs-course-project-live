@@ -8,6 +8,14 @@ namespace Reminder.Storage.WebApi.Core
 	{
 		[Required]
 		public ReminderItemStatus Status { get; set; }
+
+        public ReminderItemUpdateModel()
+        { }
+
+        public ReminderItemUpdateModel(ReminderItem reminderItem)
+        {
+            Status = reminderItem.Status;
+        }
 	}
 }
 

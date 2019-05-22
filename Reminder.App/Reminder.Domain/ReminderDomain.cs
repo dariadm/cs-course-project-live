@@ -83,7 +83,7 @@ namespace Reminder.Domain
 			var parsedMessage = MessageParser.Parse(e.Message);
 			if (parsedMessage != null)
 			{
-				var reminder = new ReminderItem
+				var reminder = new ReminderItemRestricted
 				{
 					ContactId = e.ContactId,
 					Message = parsedMessage.Message,

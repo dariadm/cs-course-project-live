@@ -9,6 +9,7 @@ using System.Net.Http;
 using System.Text;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.JsonPatch.Operations;
+using Newtonsoft.Json.Serialization;
 
 namespace Reminder.Storage.WebApi.Client
 {
@@ -78,32 +79,28 @@ namespace Reminder.Storage.WebApi.Client
 				.ToList();
 		}
 
-		public void UpdateStatus(IEnumerable<Guid> ids, ReminderItemStatus status)
-		{
-			var patchDocument = new JsonPatchDocument<ReminderItemUpdateModel>(
-				new List<Operation<ReminderItemUpdateModel>>
-			{
-				new Operation<ReminderItemUpdateModel>
-				{
-					op = "replace",
-					path = "/status",
-					value = (int)status
-				}
-			},
-				new Newtonsoft.Json.Serialization.DefaultContractResolver());
-
-			var model = new ReminderItemsUpdateModel
-			{
-				Ids = ids.ToList(),
-				PatchDocument = patchDocument
-			};
-
-			var content = JsonConvert.SerializeObject(model);
+        public void UpdateStatus(IEnumerable<Guid> ids, ReminderItemStatus status)
+        {
+            var contentModel = new ReminderItemsUpdateModel
+            {
+                Ids = ids.ToList(),
+                PatchDocument = new JsonPatchDocument<ReminderItemUpdateModel>(
+                    new List<Operation<ReminderItemUpdateModel>>
+                    {
+                    new Operation<ReminderItemUpdateModel>
+                    {
+                        op = "replace",
+                        path = "/status",
+                        value = (int)status
+                    }
+                    },
+                    new DefaultContractResolver())
+            };
 
 			var result = CallWebApi(
 				"PATCH",
 				"/api/reminders",
-				content);
+				JsonConvert.SerializeObject(contentModel));
 
 			if (result.StatusCode != System.Net.HttpStatusCode.NoContent)
 			{

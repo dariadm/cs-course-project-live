@@ -29,6 +29,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Reminder.Receiver.Telegram.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Reminder.Sender.Core", "Reminder.Sender.Core\Reminder.Sender.Core.csproj", "{22667D07-41C4-45D6-87FB-D07F5B597736}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Reminder.Sender.Telegram", "Reminder.Sender.Telegram\Reminder.Sender.Telegram.csproj", "{1412A8D6-F14B-4E3F-949D-86152E9DADBF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -87,6 +89,10 @@ Global
 		{22667D07-41C4-45D6-87FB-D07F5B597736}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{22667D07-41C4-45D6-87FB-D07F5B597736}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{22667D07-41C4-45D6-87FB-D07F5B597736}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1412A8D6-F14B-4E3F-949D-86152E9DADBF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1412A8D6-F14B-4E3F-949D-86152E9DADBF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1412A8D6-F14B-4E3F-949D-86152E9DADBF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1412A8D6-F14B-4E3F-949D-86152E9DADBF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
