@@ -1,4 +1,7 @@
-﻿
+﻿--CREATE DATABASE [Reminder];
+--GO
+--USE [Reminder];
+--GO
 -- drop foreign key
 IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[ReminderItem]') AND type in (N'U'))
 	ALTER TABLE [dbo].[ReminderItem] DROP CONSTRAINT IF EXISTS [FK_ReminderItem_StatusId]

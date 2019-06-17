@@ -1,4 +1,5 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Reminder.Storage.Core;
 using Reminder.Storage.SqlServer.ADO.Tests.Properties;
 using System;
 using System.Data.SqlClient;
@@ -32,6 +33,111 @@ namespace Reminder.Storage.SqlServer.ADO.Tests
             });
 
             Assert.AreNotEqual(Guid.Empty, actual);
+        }
+
+        [TestMethod]
+        public void Get_By_Id_Method_Returns_Just_Added_Item()
+        {
+            var storage = new SqlReminderStorage(_connectionString);
+
+            DateTimeOffset expectedDate = DateTimeOffset.Now;
+            string expectedContactId = "TEST_CONTACT_ID";
+            string expectedMessage = "TEST_MESSAGE_TEXT";
+            ReminderItemStatus expectedStatus = ReminderItemStatus.Awaiting;
+
+            Guid id = storage.Add(new ReminderItemRestricted
+            {
+                ContactId = expectedContactId,
+                Date = expectedDate,
+                Message = expectedMessage,
+                Status = expectedStatus
+            });
+
+            Assert.AreNotSame(Guid.Empty, id);
+
+            var actualItem = storage.Get(id);
+
+            Assert.IsNotNull(actualItem);
+            Assert.AreEqual(id, actualItem.Id);
+            Assert.AreEqual(expectedContactId, actualItem.ContactId);
+            Assert.AreEqual(expectedDate, actualItem.Date);
+            Assert.AreEqual(expectedMessage, actualItem.Message);
+            Assert.AreEqual(expectedStatus, actualItem.Status);
+        }
+
+        [TestMethod]
+        public void Get_By_Id_Returns_Null_If_Not_Found()
+        {
+            var storage = new SqlReminderStorage(_connectionString);
+
+            var actual = storage.Get(Guid.Empty);
+
+            Assert.IsNull(actual);
+        }
+
+        [TestMethod]
+        public void Get_By_Status_0_Returns_Valid_Number_Of_Items_For_Each_Status()
+        {
+            var storage = new SqlReminderStorage(_connectionString);
+
+            var actualItemList = storage.Get(ReminderItemStatus.Awaiting);
+
+            Assert.AreEqual(1, actualItemList.Count);
+        }
+
+        [TestMethod]
+        public void Get_By_Status_2_Returns_Valid_Number_Of_Items_For_Each_Status()
+        {
+            var storage = new SqlReminderStorage(_connectionString);
+
+            var actualItemList = storage.Get(ReminderItemStatus.Sent);
+
+            Assert.AreEqual(2, actualItemList.Count);
+        }
+
+        [TestMethod]
+        public void Get_By_Status_3_Returns_Valid_Number_Of_Items_For_Each_Status()
+        {
+            var storage = new SqlReminderStorage(_connectionString);
+
+            var actualItemList = storage.Get(ReminderItemStatus.Failed);
+
+            Assert.AreEqual(0, actualItemList.Count);
+        }
+
+        [TestMethod]
+        public void Get_By_Status_1_Returns_Valid_Number_Of_Items_For_Each_Status()
+        {
+            var storage = new SqlReminderStorage(_connectionString);
+
+            var actualItemList = storage.Get(ReminderItemStatus.Ready);
+
+            Assert.AreEqual(0, actualItemList.Count);
+        }
+
+        [TestMethod]
+        public void Get_By_Status_255_Returns_Empty_List()
+        {
+            var storage = new SqlReminderStorage(_connectionString);
+
+            var actualItemList = storage.Get((ReminderItemStatus)255);
+
+            Assert.IsNotNull(actualItemList);
+            Assert.AreEqual(0, actualItemList.Count);
+        }
+
+        [TestMethod]
+        public void Update_Status_1_Returns_Valid_Status()
+        {
+            var storage = new SqlReminderStorage(_connectionString);
+
+            Guid id = new Guid("00000000-0000-0000-0000-111111111111");
+
+            storage.UpdateStatus(id, ReminderItemStatus.Ready);
+
+            ReminderItem reminderItem = storage.Get(id);
+
+            Assert.AreEqual(reminderItem.Status, ReminderItemStatus.Ready);
         }
     }
 }
