@@ -2,7 +2,9 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Reminder.Storage.Core;
 using Reminder.Storage.SqlServer.ADO.Tests.Properties;
 using System;
+using System.Collections.Generic;
 using System.Data.SqlClient;
+using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace Reminder.Storage.SqlServer.ADO.Tests
@@ -11,7 +13,8 @@ namespace Reminder.Storage.SqlServer.ADO.Tests
     public class SqlReminderStorageTests
     {
         private const string _connectionString =
-            @"Data Source=localhost\SQLEXPRESS; Initial Catalog=ReminderTests;Integrated Security=True";
+            @"Data Source=(localdb)\MSSQLLocalDB; Initial Catalog=ReminderTests;Integrated Security=True";
+                   // @"Data Source=localhost\SQLEXPRESS; Initial Catalog=ReminderTests;Integrated Security=True";
 
         [TestInitialize]
         public void TestInitialize()
@@ -138,6 +141,59 @@ namespace Reminder.Storage.SqlServer.ADO.Tests
             ReminderItem reminderItem = storage.Get(id);
 
             Assert.AreEqual(reminderItem.Status, ReminderItemStatus.Ready);
+        }
+
+        [TestMethod]
+        public void Property_Count_Returns_Three_For_Initial_DataSet()
+        {
+            var storage = new SqlReminderStorage(_connectionString);
+
+            int actual = storage.Count;
+
+            Assert.AreEqual(3, actual);
+        }
+
+        [TestMethod]
+        public void Remove_Returns_1_If_NExists()
+        {
+            var storage = new SqlReminderStorage(_connectionString);
+
+            Guid id = new Guid("00000000-0000-0000-0000-111111111111");
+
+            bool result = storage.Remove(id);
+
+            Assert.AreEqual(true, result);
+        }
+
+        [TestMethod]
+        public void Remove_Returns_0_If_Not_Exist()
+        {
+            var storage = new SqlReminderStorage(_connectionString);
+
+            Guid id = new Guid("00000000-8888-0000-0000-111111111111");
+
+            bool result = storage.Remove(id);
+
+            Assert.AreEqual(false, result);
+       }
+
+        [TestMethod]
+        public void Update_Status_Method_With_Ids_Collection_Updates_Corresponded_Items()
+        {
+            var storage = new SqlReminderStorage(_connectionString);
+
+            var ids = new List<Guid>
+            {
+                new Guid("00000000-0000-0000-0000-111111111111"),
+                new Guid("00000000-0000-0000-0000-333333333333")
+            };
+
+            storage.UpdateStatus(ids, ReminderItemStatus.Failed);
+
+            var actual =  storage.Get(ReminderItemStatus.Failed);
+
+            Assert.IsTrue(actual.Select(x => x.Id).Contains([ids[0]));
+            Assert.IsTrue(actual.Select(x => x.Id).Contains([ids[1]));
         }
     }
 }

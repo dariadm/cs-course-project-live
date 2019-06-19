@@ -12,7 +12,7 @@ namespace Reminder.Storage.SqlServer.ADO
 
         public SqlReminderStorage(string connectionString)
         {
-            _connectionString = connectionString; 
+            _connectionString = connectionString;
         }
 
         public Guid Add(ReminderItemRestricted reminder)
@@ -38,6 +38,17 @@ namespace Reminder.Storage.SqlServer.ADO
             }
         }
 
+        public List<ReminderItem> Get(int count = 0, int startPosition = 0)
+        {
+            var result = new List<ReminderItem>();
+            result.AddRange(Get(ReminderItemStatus.Awaiting));
+            result.AddRange(Get(ReminderItemStatus.Failed));
+            result.AddRange(Get(ReminderItemStatus.Ready));
+            result.AddRange(Get(ReminderItemStatus.Sent));
+
+            return result;
+        }
+
         public ReminderItem Get(Guid id)
         {
             using (var sqlConnection = GetOpenedSqlConnection())
@@ -49,7 +60,7 @@ namespace Reminder.Storage.SqlServer.ADO
                 cmd.Parameters.AddWithValue("@reminderId", id);
                 using (SqlDataReader reader = cmd.ExecuteReader())
                 {
-                    if(!reader.HasRows || !reader.Read())
+                    if (!reader.HasRows || !reader.Read())
                     {
                         return null;
                     }
@@ -92,7 +103,7 @@ namespace Reminder.Storage.SqlServer.ADO
                     int statusColumnIndex = reader.GetOrdinal("StatusId");
 
                     while (reader.Read())
-                    { 
+                    {
                         var newReminderItem = new ReminderItem
                         {
                             Id = reader.GetGuid(idColumnIndex),
@@ -105,7 +116,7 @@ namespace Reminder.Storage.SqlServer.ADO
                         result.Add(newReminderItem);
                     }
                     return result;
-                }               
+                }
             }
         }
 
@@ -113,10 +124,39 @@ namespace Reminder.Storage.SqlServer.ADO
         {
             using (var sqlConnection = GetOpenedSqlConnection())
             {
-                foreach(var id in ids)
+                var cmd = sqlConnection.CreateCommand();
+                cmd.CommandType = CommandType.Text;
+                cmd.CommandText = "CREATE TABLE #ReminderItem ([Id] UNIQUEIDENTIFIER NOT NULL)";
+                cmd.ExecuteNonQuery();
+
+                //Insert data
+                using (SqlBulkCopy copy = new SqlBulkCopy(sqlConnection))
                 {
-                    UpdateStatus(id, status);
+                    copy.BatchSize = 1000;
+                    copy.DestinationTableName = "#ReminderItem";
+
+                    DataTable tempTable = new DataTable("#ReminderItem");
+
+                    tempTable.Columns.Add("Id", typeof(Guid));
+
+                    foreach(Guid id in ids)
+                    {
+                        DataRow row = tempTable.NewRow();
+                        row["Id"] = id;
+                        tempTable.Rows.Add(row);
+                    }
+
+                    copy.WriteToServer(tempTable);
                 }
+
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.CommandText = "[dbo].[UpdateReminderItemsBulk";
+                cmd.Parameters.AddWithValue("@statusId", (byte)status);
+                cmd.ExecuteNonQuery();
+
+                cmd.CommandType = CommandType.Text;
+                cmd.CommandText = "DROP TABLE #ReminderItem";
+                cmd.ExecuteNonQuery();
             }
         }
 
@@ -134,6 +174,36 @@ namespace Reminder.Storage.SqlServer.ADO
                 cmd.ExecuteNonQuery();
             }
         }
+
+        public int Count
+        {
+            get
+            {
+                using (var sqlConnection = GetOpenedSqlConnection())
+                {
+                    var cmd = sqlConnection.CreateCommand();
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.CommandText = "[dbo].[GetReminderItemsCount]";
+
+                    return (int)cmd.ExecuteScalar();
+                }
+            }
+        }
+
+        public bool Remove(Guid id)
+        {
+            using (var sqlConnection = GetOpenedSqlConnection())
+            {
+                var cmd = sqlConnection.CreateCommand();
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.CommandText = "[dbo].[RemoveReminderItem]";
+
+                cmd.Parameters.AddWithValue("@reminderId", id);
+
+                return (bool)cmd.ExecuteScalar();
+            }
+        }
+
 
         private SqlConnection GetOpenedSqlConnection()
         {

@@ -90,4 +90,42 @@ AS BEGIN
 END
 GO
 			
+DROP PROCEDURE IF EXISTS [dbo].[GetReminderItemsCount]
+GO
+CREATE PROCEDURE [dbo].[GetReminderItemsCount]
+AS BEGIN
+	SELECT COUNT(*) AS [Count] 
+	FROM [dbo].[ReminderItem]
+END 
+GO
 
+DROP PROCEDURE IF EXISTS [dbo].[RemoveReminderItem]
+GO
+CREATE PROCEDURE [dbo].[RemoveReminderItem](
+	@reminderId AS UNIQUEIDENTIFIER)
+AS BEGIN
+	SET NOCOUNT ON
+
+	DELETE
+	FROM
+		[dbo].[ReminderItem]
+	WHERE [Id] = @reminderId
+
+	SELECT CAST (@@ROWCOUNT AS BIT)
+END
+GO
+
+DROP PROCEDURE IF EXISTS [dbo].[UpdateReminderItemsBulk]
+GO
+CREATE PROCEDURE [dbo].[UpdateReminderItemsBulk](
+	@statusId AS TINYINT
+)
+AS BEGIN
+	UPDATE R 
+		SET R.[StatusId] = @statusId,
+		R.[UpdatedDate] = SYSDATETIMEOFFSET()
+	FROM [dbo].[ReminderItem] AS R
+	INNER JOIN #ReminderItem AS T
+			ON T.Id = R.Id
+END 
+GO

@@ -135,7 +135,59 @@ namespace Reminder.Storage.WebApi.Client
 			}
 		}
 
-		private HttpResponseMessage CallWebApi(
+        public int Count
+        {
+            get
+            {
+                var httpResponseMessage = CallWebApi("HEAD", "/api/reminders", null);
+                if (httpResponseMessage.StatusCode != System.Net.HttpStatusCode.OK)
+                {
+                    throw GetException(httpResponseMessage);
+                }
+
+                const string totalCountHeaderName = "X-Total-Count";
+                if (!httpResponseMessage.Headers.Contains(totalCountHeaderName))
+                {
+                    throw new Exception($"There is no expected header '{totalCountHeaderName}' found");
+                }
+
+                string xTotalCountHeader = httpResponseMessage.Headers
+                    .GetValues(totalCountHeaderName)
+                    .First();
+
+                return int.Parse(xTotalCountHeader);
+            }
+        }
+
+        public List<ReminderItem> Get(int count, int startPostion)
+        {
+            var queryParams = new List<KeyValuePair<string, string>>();
+
+            if (count > 0)
+                queryParams.Add(new KeyValuePair<string, string>("[paging]count", count.ToString()));
+
+            if (startPostion > 0)
+                queryParams.Add(new KeyValuePair<string, string>("[paging]startPostion", startPostion.ToString()));
+
+            var httpResponseMessage = CallWebApi("GET", "/api/reminders" + BuildQueryString(queryParams));
+
+            if (httpResponseMessage.StatusCode != System.Net.HttpStatusCode.OK)
+            {
+                throw GetException(httpResponseMessage);
+            }
+
+            var list = JsonConvert.DeserializeObject<List<ReminderItemGetModel>>(
+                httpResponseMessage.Content.ReadAsStringAsync().Result);
+
+            if (list == null)
+                throw new Exception($"Body cannot be parsed as List<ReminderItemGetModel>.");
+
+            return list
+                .Select(m => m.ToReminderItem())
+                .ToList();
+        }
+
+        private HttpResponseMessage CallWebApi(
 			string method,
 			string relativeUrl,
 			string content = null)
@@ -162,5 +214,41 @@ namespace Reminder.Storage.WebApi.Client
 			return new Exception($"Error: {httpResponseMesage.StatusCode}, " +
 					$"Content: {httpResponseMesage.Content.ReadAsStringAsync().Result}");
 		}
-	}
+
+        public bool Remove(Guid id)
+        {
+            var httpResponseMessage = CallWebApi("DELETE", $"/api/reminders/{id}");
+
+            if (httpResponseMessage.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                return false;
+            }
+
+            if (httpResponseMessage.StatusCode != System.Net.HttpStatusCode.NoContent)
+            {
+                throw GetException(httpResponseMessage);
+            }
+
+            return true;
+        }
+
+        private Exception GetException(HttpResponseMessage result)
+        {
+            return new Exception(
+                $"Error: {result.StatusCode}, " +
+                $"Content: {result.Content.ReadAsStringAsync().Result}");
+        }
+
+        private string BuildQueryString(List<KeyValuePair<string, string>> queryParams)
+        {
+            if (queryParams?.Count == 0)
+                return string.Empty;
+
+            return "?" + string.Join(
+                "&",
+                queryParams
+                    .Select(kvp => kvp.Key + "=" + kvp.Value)
+                    .ToArray());
+        }
+    }
 }
